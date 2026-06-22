@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=../doc/stagegraph.schema.json
+version: v0
+
+name: turntable
+description: |
+  Single-axis rotary stage for structured light scanning.
+  The platter rotates around the vertical (Z) axis so the
+  scanner can capture the object from every angle.
+mount: base
+work: platter
+
+links:
+  base:
+    label: Base
+    description: Sits on the table; holds the bearing
+    geometries:
+    - type: cylinder
+      radius: 0.12
+      height: 0.03
+
+  platter:
+    label: Platter
+    description: Rotating disc the object sits on
+    geometries:
+    - type: cylinder
+      radius: 0.10
+      height: 0.02
+
+joints:
+  rotation:
+    type: revolute
+    parent: base
+    child: platter
+    axis: [0, 0, 1]
+    origin: [0, 0, 0.03]
+    limits:
+      min: -3.14159
+      max: 3.14159

@@ -1,0 +1,15 @@
+[package]
+name = "e-light-stagegraph"
+description.workspace = true
+version.workspace = true
+edition.workspace = true
+homepage.workspace = true
+authors.workspace = true
+
+[dependencies]
+ordered_hash_map = { version = "0.6.0", features = ["serde"] }
+schemars = { git = "https://github.com/LucaCiucci/schemars", version = "1.2.1", features = ["ordered_hash_map06"] }
+serde = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+serde_json = "1.0.150"

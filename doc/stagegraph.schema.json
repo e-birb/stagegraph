@@ -1,0 +1,451 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage",
+  "description": "A physical positioning stage for structured light scanning.\n\nSee [`StageV0`] for the current version of the stage schema.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "v0"
+        }
+      },
+      "$ref": "#/$defs/StageV0",
+      "required": [
+        "version"
+      ]
+    }
+  ],
+  "$defs": {
+    "BoxShape": {
+      "description": "A rectangular box (cuboid) primitive.",
+      "type": "object",
+      "properties": {
+        "depth": {
+          "description": "Extent along the Y axis.",
+          "type": "number",
+          "format": "double"
+        },
+        "height": {
+          "description": "Extent along the Z axis.",
+          "type": "number",
+          "format": "double"
+        },
+        "orientation": {
+          "description": "Euler angles (radians, XYZ intrinsic) rotating the shape.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "position": {
+          "description": "Offset from the link frame origin.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "width": {
+          "description": "Extent along the X axis.",
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "width",
+        "depth",
+        "height"
+      ]
+    },
+    "Cylinder": {
+      "description": "A cylinder primitive.",
+      "type": "object",
+      "properties": {
+        "height": {
+          "type": "number",
+          "format": "double"
+        },
+        "orientation": {
+          "description": "Euler angles (radians, XYZ intrinsic) rotating the shape.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "position": {
+          "description": "Offset from the link frame origin.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "radius": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "radius",
+        "height"
+      ]
+    },
+    "Geometry": {
+      "description": "A primitive 3D shape attached to a link's frame.\n\nThe shape's `position` and `orientation` are relative to the link's\ncoordinate frame.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "cylinder"
+            }
+          },
+          "$ref": "#/$defs/Cylinder",
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "box"
+            }
+          },
+          "$ref": "#/$defs/BoxShape",
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "mesh"
+            }
+          },
+          "$ref": "#/$defs/Mesh",
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "Joint": {
+      "description": "A joint connects two links and contributes one degree of freedom.\n\nEach joint has a `parent` link and a `child` link, forming a directed\nedge in the kinematic tree.  The joint's `origin` is relative to the\nparent link's frame; the child link's frame is computed from it.",
+      "type": "object",
+      "properties": {
+        "child": {
+          "description": "Identifier of the child link.",
+          "type": "string"
+        },
+        "parent": {
+          "description": "Identifier of the parent link.",
+          "type": "string"
+        }
+      },
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "revolute"
+            }
+          },
+          "$ref": "#/$defs/RevoluteJoint",
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "prismatic"
+            }
+          },
+          "$ref": "#/$defs/PrismaticJoint",
+          "required": [
+            "type"
+          ]
+        }
+      ],
+      "required": [
+        "parent",
+        "child"
+      ]
+    },
+    "JointLimits": {
+      "description": "Motion limits of a joint.",
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "Maximum value (radians for revolute, metres for prismatic).",
+          "type": "number",
+          "format": "double"
+        },
+        "min": {
+          "description": "Minimum value (radians for revolute, metres for prismatic).",
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ]
+    },
+    "Link": {
+      "description": "A rigid body in the stage.\n\nEach link can carry a visual geometry for 3D rendering.  Its frame\nis determined by the parent joint's `origin` and the joint's degree\nof freedom — not by an explicit position field.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Free-form description of this link's role.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "geometries": {
+          "description": "Visual geometry attached to this link's frame.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Geometry"
+          }
+        },
+        "label": {
+          "description": "Human-readable display label (optional; defaults to the map key).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "Mesh": {
+      "description": "A mesh loaded from an external file.\n\nThe file path is relative to the stage description file.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "description": "Mesh format hint.  Inferred from the file extension when absent.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MeshFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "orientation": {
+          "description": "Euler angles (radians, XYZ intrinsic) rotating the shape.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "path": {
+          "description": "Path to the mesh file (relative to the stage YAML).",
+          "type": "string"
+        },
+        "position": {
+          "description": "Offset from the link frame origin.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "scale": {
+          "description": "Uniform scale factor applied to the mesh.",
+          "type": "number",
+          "format": "double",
+          "default": 1.0
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "MeshFormat": {
+      "description": "Supported mesh formats.",
+      "type": "string",
+      "enum": [
+        "obj",
+        "stl",
+        "stl_binary",
+        "gltf",
+        "glb"
+      ]
+    },
+    "PrismaticJoint": {
+      "description": "A prismatic joint allows linear translation along a single axis.\n\nThe `origin` places the child link's frame; the child translates\nalong `axis` as the joint moves.",
+      "type": "object",
+      "properties": {
+        "axis": {
+          "description": "Translation axis in the parent link's frame.",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "limits": {
+          "description": "Linear limits in metres.  `None` = unlimited travel.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JointLimits"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin": {
+          "description": "Position of the joint in the parent link's frame.",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        }
+      },
+      "required": [
+        "axis",
+        "origin"
+      ]
+    },
+    "RevoluteJoint": {
+      "description": "A revolute joint allows rotation around a single axis.\n\nThe `origin` places the child link's frame; the child rotates\naround `axis` (passing through `origin`) as the joint moves.",
+      "type": "object",
+      "properties": {
+        "axis": {
+          "description": "Rotation axis in the parent link's frame (does not need\nto be unit-length; direction is what matters).",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "limits": {
+          "description": "Angular limits in radians.  `None` = unlimited rotation.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JointLimits"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin": {
+          "description": "Position of the joint in the parent link's frame.",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        }
+      },
+      "required": [
+        "axis",
+        "origin"
+      ]
+    },
+    "StageV0": {
+      "description": "A physical positioning stage for structured light scanning.\n\nDescribes the shape and kinematics of a stage (turntable, linear\npositioner, tilt unit, etc.) as a **tree of links connected by joints**.\n\n```text\n┌──────────┐    joint      ┌──────────┐\n│  link A  │────parent────▶│  link B  │\n│  (root)  │    child      │          │\n└──────────┘               └──────────┘\n```\n\n# Semantics\n\n- Links and joints form a **directed tree** rooted at the first link\n  that is never listed as any joint's `child`.\n- Each joint's `origin` is relative to its **parent link's frame**.\n- The `child` link's frame is placed at `joint.origin` and oriented\n  according to the joint type (e.g. rotated around `axis` for revolute).\n\n# Examples\n\nA single-axis turntable has one revolute joint:\n\n```yaml\nname: turntable\nmount: base\nwork: platter\nlinks:\n  base:    { }\n  platter: { }\njoints:\n  rotation:\n    type: revolute\n    parent: base\n    child: platter\n    axis: [0, 0, 1]\n    origin: [0, 0, 0.03]\n    limits: { min: -3.14, max: 3.14 }\n```\n\nMore complex stages (tilt + rotate, linear + rotary,\nStewart platforms, …) add more joints to the tree.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Free-form description of the stage.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "joints": {
+          "description": "The joints (degrees of freedom) connecting links, keyed by identifier.\n\nJoints must form a valid tree — no cycles, every `child` references\nan existing link, and every non-root link has exactly one parent joint.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Joint"
+          }
+        },
+        "links": {
+          "description": "The rigid bodies in the stage, keyed by identifier.\n\nLinks referenced by `Joint.parent` / `Joint.child` must exist.\nThe first link that is never a joint's `child` is the root.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Link"
+          }
+        },
+        "mount": {
+          "description": "Link identifier of the mounting surface — the part that is fixed\nto the world (table, breadboard, robot flange).  This link does\nnot move when joints are actuated.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Machine-readable identifier (e.g. `turntable`, `xy-stage`).",
+          "type": "string"
+        },
+        "work": {
+          "description": "Link identifier of the working surface — the part that holds\nthe object being scanned.  This is the \"exit point\" of the\nkinematic chain: the frame where the scanned object's\ncoordinate system attaches.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "mount",
+        "work",
+        "links",
+        "joints"
+      ]
+    }
+  }
+}
